@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="68074f10-6769-4b9c-ad1d-f12aa35d7b9f" >
+		<http:listener-connection host="localhost" port="8082" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="f3359d6a-ee90-404a-a814-8caa015e38a1" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="admin" database="mule" />
+	</db:config>
+	<flow name="database_1Flow" doc:id="b9d87cd7-67e2-4cdc-88b6-d0a868493ce6" >
+		<http:listener doc:name="Listener" doc:id="e07b63b1-ed62-4c74-9de8-4c70beac6ee4" config-ref="HTTP_Listener_config" path="/db"/>
+		<db:select doc:name="Select" doc:id="765f15a0-e268-4e41-b054-36b83c11cea3" config-ref="Database_Config">
+			<db:sql >SELECT * FROM student </db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="7ace6fb5-5240-4db0-83ba-1d1057c52921" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv headerLineNumber = 0 , header = true
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	rollno: payload01.rollno,
+	studname: payload01.studname default "",
+	marks: payload01.marks default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="71bd81ff-7f47-4c1b-9c1e-4996b9a057b4" message="#[payload]"/>
+		<file:write doc:name="Write" doc:id="7267b878-15c3-4ae4-a1dc-45e2109e386f" path="C:\Users\hailu\OneDrive\Desktop\cc_try\test.csv"/>
+		<set-payload value="thanks" doc:name="Set Payload" doc:id="0d8fa35e-5650-40d4-8ad1-6d7bef915fda" />
+	</flow>
+</mule>
